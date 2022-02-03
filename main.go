@@ -1,25 +1,50 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"fmt"
+	"log"
+	"os"
 	str "strings"
 )
-
-const WORDLEN = 5
 
 type Pattern []int
 
 var AllPatterns []Pattern
 
 func main() {
-	// Allwords = read_words(fname)
+
+	fnamePtr := flag.String("wordfile", "./words/5-3.txt", "wordlist file")
+	nwordsPtr := flag.Int("nwords", -1, "number of words to process")
+	wordlenPtr := flag.Int("wordlen", 5, "Length of words in word list")
+
+	flag.Parse()
 
 	AllPatterns = make([]Pattern, 0)
+	BuildPattern(0, Pattern{}, *wordlenPtr)
 
-	// build_strategy(Allwords)
-	BuildPattern(0, Pattern{})
-	// fmt.Println(patterns)
+	allwords := BuildWordList(*fnamePtr, *nwordsPtr)
+	fmt.Println("Num Words: ", len(allwords))
+	InitStrategy(allwords)
+}
 
+func BuildWordList(fname string, nwords int) []string {
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatalf("failed to open")
+
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var text []string
+
+	for n := 0; ((nwords == -1) || n < nwords) && scanner.Scan(); n += 1 {
+		text = append(text, scanner.Text())
+	}
+	file.Close()
+
+	return text
 }
 
 type StrategyElement struct {
@@ -36,46 +61,56 @@ type StrategyStage struct {
 func InitStrategy(allwords []string) StrategyStage {
 	root := StrategyStage{Dictionary: allwords}
 	BuildStrategy(&root, allwords)
-	PrintStrategy(&root, 0, nil)
+	maxdepth := -1
+	PrintStrategy(&root, 0, nil, &maxdepth)
+	fmt.Println("Max Depth: ", maxdepth)
 	return root
 }
 
-func PrintStrategy(s *StrategyStage, depth int, pattern Pattern) {
-	if s != nil {
-		for i := 0; i < depth; i += 1 {
-			fmt.Print("  ")
+func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int) {
+	if s == nil {
+		return
+	}
+
+	if depth > *maxdepth {
+		*maxdepth = depth
+	}
+
+	for i := 0; i < depth; i += 1 {
+		fmt.Print("  ")
+	}
+
+	if pattern != nil {
+		fmt.Printf("d%d%v", depth, pattern)
+	}
+	if len(s.Dictionary) != 0 {
+
+		if len(s.Dictionary) == 1 {
+			fmt.Print(" Final Word: ", s.Dictionary[0])
+		} else {
+			fmt.Print(" Guess: ", s.Guess, " DictLen: ", len(s.Dictionary))
 		}
-		if pattern != nil {
-			fmt.Print(pattern)
-		}
-		if len(s.Dictionary) != 0 {
-			fmt.Print(" Depth:", depth, " Guess: ", s.Guess, " DictLen: ", len(s.Dictionary))
 
-			if len(s.Dictionary) == 1 {
-				fmt.Print(" Final Word: ", s.Dictionary[0])
-			}
+		fmt.Println("")
 
-			fmt.Println("")
-
-			if len(s.Patterns) != 0 {
-				for _, p := range s.Patterns {
-					if p.NextStage != nil && len(p.NextStage.Dictionary) != 0 {
-						PrintStrategy(p.NextStage, depth+1, p.Pattern)
-					}
+		if len(s.Patterns) != 0 {
+			for _, p := range s.Patterns {
+				if p.NextStage != nil && len(p.NextStage.Dictionary) != 0 {
+					PrintStrategy(p.NextStage, depth+1, p.Pattern, maxdepth)
 				}
 			}
 		}
 	}
 }
 
-func BuildPattern(position int, pattern Pattern) {
-	if position == WORDLEN {
+func BuildPattern(position int, pattern Pattern, wordlen int) {
+	if position == wordlen {
 		AllPatterns = append(AllPatterns, pattern)
 		return
 	}
 	for _, i := range []int{0, 1, 2} {
 		p := append(pattern, i)
-		BuildPattern(position+1, p)
+		BuildPattern(position+1, p, wordlen)
 	}
 }
 
@@ -91,34 +126,28 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 	// fmt.Println("strategy stage", s)
 
 	var best StrategyStage
+
 	for _, guess := range allwords {
-		// fmt.Println("guess", guess)
 		cur := StrategyStage{Guess: guess}
 		max_pattern_len := 0
 
 		// Determine how many words from the dictionary match for each pattern
 		for _, pattern := range AllPatterns {
-			// fmt.Println("pattern", pattern)
 			se := StrategyElement{Pattern: pattern}
 			se.NextStage = &StrategyStage{}
 
 			for _, word := range s.Dictionary {
-				// fmt.Println("word", word)
-				if PatternMatch(guess, word, pattern) {
-					fmt.Println("match", guess, word, pattern)
+				if word != guess && PatternMatch(guess, word, pattern) {
 
 					// Add the word to the pattern's dictionary
 					se.NextStage.Dictionary = append(se.NextStage.Dictionary, word)
-					fmt.Println("Se1", se, se.NextStage)
 				}
 			}
-			fmt.Println("guess", guess, max_pattern_len)
 
 			if max_pattern_len < len(se.NextStage.Dictionary) {
 				max_pattern_len = len(se.NextStage.Dictionary)
 
 			}
-			fmt.Println("Se", se, se.NextStage)
 			cur.Patterns = append(cur.Patterns, se)
 		}
 
@@ -126,7 +155,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 		if minmax_len > max_pattern_len {
 			minmax_len = max_pattern_len
 			best = cur
-			fmt.Println("best guess", best.Guess, max_pattern_len)
+			// fmt.Println("best guess:", best.Guess, "minmax:", minmax_len)
 		}
 	}
 
@@ -134,6 +163,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 	s.Patterns = best.Patterns
 
 	for _, p := range s.Patterns {
+		// fmt.Println("Next Stage")
 		BuildStrategy(p.NextStage, allwords)
 	}
 }
@@ -141,27 +171,62 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 // XXX May be more efficient ways to do this, but let's just get started
 // Does word match guess according to pattern?
 func PatternMatch(guess string, word string, pattern []int) bool {
+
 	for ip, cp := range pattern {
-		cg := guess[ip]
-		// fmt.Println("ip", ip, "cp", cp, "cg", string(cg), "word", word, str.IndexByte(word, cg))
-		idx := str.IndexByte(word, cg)
-		switch cp {
-		case 0:
-			if idx >= 0 {
+		cg := byte(guess[ip])
+		// fmt.Println("ip", ip, "cp", cp, "cg", string(cg), "guess", guess, "word", word)
+
+		// XXX clean this upto not use a switch statement.
+
+		// If a 2, it needs to match it's a  matches, it's a 2
+		if cp == 2 {
+			if guess[ip] != word[ip] {
+				// fmt.Println("false")
 				return false
 			}
-		case 1:
-			if idx < 0 || idx == ip { // -1 or positive and equal
+			continue
+		}
+
+		// In the case of a 0 or 1, if it matches, it's a 2
+		if (guess[ip] == word[ip]) {
+			return false 
+		}
+
+		// We need to remove the perfect matches.  Then if there are still
+		// some letters left over, it's a 1.  Otherwise, it's a 0.
+		// XXX Is there a more efficient way to do this?
+
+		// First eliminate dups by just putting in a wildcard char
+
+		tmp := []byte(word)
+
+		// Remove all the dups
+		for idx, _ := range word {
+			if cg == word[idx] && word[idx] == guess[idx] {
+				tmp[idx] = '*'
+			}
+		}
+		// fmt.Println("tmp", string(tmp))
+
+		// Check if there are any remaining matching letters
+		// If there are, it's a 1, it not, it's 0
+		if cp == 0 {
+			if str.IndexByte(string(tmp), cg) >= 0 {
+				// fmt.Println("false")
 				return false
 			}
-		case 2:
-			if idx < 0 || idx != ip {
+			continue
+		}
+		
+		if cp == 1 {
+			if str.IndexByte(string(tmp), cg) < 0 {
+				// fmt.Println("false")
 				return false
 			}
-		default:
-			// error
+			continue
 		}
 	}
+	// fmt.Println("true")
 	return true
 }
 

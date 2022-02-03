@@ -12,10 +12,13 @@ func TestPatternMatch(t *testing.T) {
 		want        bool
 	}{
 		{"scare", "stake", []int{2, 0, 2, 0, 2}, true},
+		{"blink", "plink", []int{0, 0, 0, 0, 0}, false},
 		{"scare", "stake", []int{2, 1, 2, 1, 1}, false},
 		{"scare", "crane", []int{0, 1, 2, 1, 2}, true},
 		{"scare", "cribs", []int{1, 1, 0, 1, 0}, true},
 		{"plink", "crave", []int{0, 0, 0, 1, 0}, false},
+		{"aback", "brake", []int{1, 1, 2, 0, 1}, false},
+		{"aback", "brake", []int{0, 1, 2, 0, 1}, true},
 		{"scare", "crack", []int{0, 1, 2, 1, 0}, true}, // XXX what is right pattern?
 	}
 
@@ -54,7 +57,7 @@ func TestBuildStrategy(t *testing.T) {
 		{allwords, true},
 	}
 	AllPatterns = make([]Pattern, 0)
-	BuildPattern(0, Pattern{})
+	BuildPattern(0, Pattern{}, 5) // XXX
 
 	for _, tt := range tests {
 		testname := fmt.Sprintf("%+v", tt)
