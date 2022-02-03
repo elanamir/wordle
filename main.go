@@ -16,7 +16,7 @@ var AllPatterns []Pattern
 func main() {
 
 	fnamePtr := flag.String("wordfile", "./words/5-3.txt", "wordlist file")
-	nwordsPtr := flag.Int("nwords", -1, "number of words to process")
+	nwordsPtr := flag.Int("nwords", -1, "number of words to process (all if -1)")
 	wordlenPtr := flag.Int("wordlen", 5, "Length of words in word list")
 
 	flag.Parse()
