@@ -230,24 +230,3 @@ func PatternMatch(guess string, word string, pattern []int) bool {
 	return true
 }
 
-/**
- * XXX this isn't right yet...
- * For each stage, we pick the guess from all guesses that gave the minimum number of maximum word sets across all responses, and that's ths strategy.
- *
-S = ALLWORDS
-lastmin = infinity
-while length S > 1 do: # XXX is this condition?
-	foreach guess in S do:
-		lastmax = 0
-		foreach response in (00000..22222) do:
-			A[response] = set of words v from S where v satisfies guess and response
-			m = length of A[response]
-			if (m > lastmax) lastmax = m
-		end
-
-		if (lastmax < lastmin) { lastmin = lastmax, bestguess = guess, S = A }
-	end
-	# need to structure strategy
-end
-
-**/
