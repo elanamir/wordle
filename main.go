@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -13,11 +14,18 @@ type Pattern []int
 
 var AllPatterns []Pattern
 
+type JsonRec struct {
+	Pattern Pattern   `json:"pattern,omitempty"`
+	Guess   string    `json:"guess"`
+	Next    []JsonRec `json:"next,omitempty"`
+}
+
 func main() {
 
-	fnamePtr := flag.String("wordfile", "./words/5-3.txt", "wordlist file")
+	fnamePtr := flag.String("wordfile", "./words/CollinsWords-5.txt", "wordlist file")
 	nwordsPtr := flag.Int("nwords", -1, "number of words to process (all if -1)")
 	wordlenPtr := flag.Int("wordlen", 5, "Length of words in word list")
+	otypePtr := flag.String("otype", "json", "Output type [json or native]")
 
 	flag.Parse()
 
@@ -26,7 +34,26 @@ func main() {
 
 	allwords := BuildWordList(*fnamePtr, *nwordsPtr)
 	fmt.Println("Num Words: ", len(allwords))
-	InitStrategy(allwords)
+	root := InitStrategy(allwords)
+
+	switch *otypePtr {
+	case "native":
+		maxdepth := -1
+		PrintStrategy(&root, 0, nil, &maxdepth)
+		fmt.Println("Max Depth: ", maxdepth)
+
+	case "json":
+		var rec JsonRec
+		JsonPrintStrategy(&root, &rec, nil)
+		res, err := json.Marshal(rec)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(string(res))
+
+	default:
+		panic("Unknown output type")
+	}
 }
 
 func BuildWordList(fname string, nwords int) []string {
@@ -61,9 +88,7 @@ type StrategyStage struct {
 func InitStrategy(allwords []string) StrategyStage {
 	root := StrategyStage{Dictionary: allwords}
 	BuildStrategy(&root, allwords)
-	maxdepth := -1
-	PrintStrategy(&root, 0, nil, &maxdepth)
-	fmt.Println("Max Depth: ", maxdepth)
+
 	return root
 }
 
@@ -83,6 +108,7 @@ func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int) 
 	if pattern != nil {
 		fmt.Printf("d%d%v", depth, pattern)
 	}
+
 	if len(s.Dictionary) != 0 {
 
 		if len(s.Dictionary) == 1 {
@@ -97,6 +123,32 @@ func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int) 
 			for _, p := range s.Patterns {
 				if p.NextStage != nil && len(p.NextStage.Dictionary) != 0 {
 					PrintStrategy(p.NextStage, depth+1, p.Pattern, maxdepth)
+				}
+			}
+		}
+	}
+}
+
+func JsonPrintStrategy(s *StrategyStage, rec *JsonRec, pattern Pattern) {
+	if s == nil {
+		return
+	}
+
+	rec.Pattern = pattern
+
+	if len(s.Dictionary) != 0 {
+		if len(s.Dictionary) == 1 {
+			rec.Guess = s.Dictionary[0]
+		} else {
+			rec.Guess = s.Guess
+		}
+
+		if len(s.Patterns) != 0 {
+			for _, p := range s.Patterns {
+				if p.NextStage != nil && len(p.NextStage.Dictionary) != 0 {
+					var t JsonRec
+					JsonPrintStrategy(p.NextStage, &t, p.Pattern)
+					rec.Next = append(rec.Next, t)
 				}
 			}
 		}
@@ -188,8 +240,8 @@ func PatternMatch(guess string, word string, pattern []int) bool {
 		}
 
 		// In the case of a 0 or 1, if it matches, it's a 2
-		if (guess[ip] == word[ip]) {
-			return false 
+		if guess[ip] == word[ip] {
+			return false
 		}
 
 		// We need to remove the perfect matches.  Then if there are still
@@ -217,7 +269,7 @@ func PatternMatch(guess string, word string, pattern []int) bool {
 			}
 			continue
 		}
-		
+
 		if cp == 1 {
 			if str.IndexByte(string(tmp), cg) < 0 {
 				// fmt.Println("false")
@@ -229,4 +281,3 @@ func PatternMatch(guess string, word string, pattern []int) bool {
 	// fmt.Println("true")
 	return true
 }
-
