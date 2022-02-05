@@ -11,6 +11,8 @@ func TestPatternMatch(t *testing.T) {
 		pattern     Pattern
 		want        bool
 	}{
+		{"abate", "aahed", []int{2, 0, 1, 0, 0}, false},
+		{"abate", "aahed", []int{2, 0, 1, 0, 1}, true},
 		{"scare", "stake", []int{2, 0, 2, 0, 2}, true},
 		{"blink", "plink", []int{0, 0, 0, 0, 0}, false},
 		{"scare", "stake", []int{2, 1, 2, 1, 1}, false},
@@ -19,6 +21,9 @@ func TestPatternMatch(t *testing.T) {
 		{"plink", "crave", []int{0, 0, 0, 1, 0}, false},
 		{"aback", "brake", []int{1, 1, 2, 0, 1}, false},
 		{"aback", "brake", []int{0, 1, 2, 0, 1}, true},
+		{"abaca", "pleat", []int{1, 0, 0, 0, 0}, true},
+		{"abaca", "pleat", []int{1, 0, 1, 0, 1}, false},
+		{"aback", "abaca", []int{1, 1, 1, 1, 0}, false},
 		{"scare", "crack", []int{0, 1, 2, 1, 0}, true}, // XXX what is right pattern?
 	}
 

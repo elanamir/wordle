@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	str "strings"
 )
 
 type Pattern []int
@@ -33,12 +32,12 @@ func main() {
 	BuildPattern(0, Pattern{}, *wordlenPtr)
 
 	allwords := BuildWordList(*fnamePtr, *nwordsPtr)
-	fmt.Println("Num Words: ", len(allwords))
 	root := InitStrategy(allwords)
 
 	switch *otypePtr {
 	case "native":
 		maxdepth := -1
+		fmt.Println("Num Words: ", len(allwords))
 		PrintStrategy(&root, 0, nil, &maxdepth)
 		fmt.Println("Max Depth: ", maxdepth)
 
@@ -220,64 +219,39 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 	}
 }
 
-// XXX May be more efficient ways to do this, but let's just get started
-// Does word match guess according to pattern?
-func PatternMatch(guess string, word string, pattern []int) bool {
+func PatternMatch(guess string, word string, pattern Pattern) bool {
+	// Calculate the pattern between guess and word and then compare to pattern
+	// Not efficient, but not sure there's a much better way to do this and this is certainly simplest.
 
-	for ip, cp := range pattern {
-		cg := byte(guess[ip])
-		// fmt.Println("ip", ip, "cp", cp, "cg", string(cg), "guess", guess, "word", word)
+	p := make(Pattern, len(word))
 
-		// XXX clean this upto not use a switch statement.
+	bword := []byte(word)
+	bguess := []byte(guess)
 
-		// If a 2, it needs to match it's a  matches, it's a 2
-		if cp == 2 {
-			if guess[ip] != word[ip] {
-				// fmt.Println("false")
-				return false
-			}
-			continue
-		}
-
-		// In the case of a 0 or 1, if it matches, it's a 2
-		if guess[ip] == word[ip] {
-			return false
-		}
-
-		// We need to remove the perfect matches.  Then if there are still
-		// some letters left over, it's a 1.  Otherwise, it's a 0.
-		// XXX Is there a more efficient way to do this?
-
-		// First eliminate dups by just putting in a wildcard char
-
-		tmp := []byte(word)
-
-		// Remove all the dups
-		for idx, _ := range word {
-			if cg == word[idx] && word[idx] == guess[idx] {
-				tmp[idx] = '*'
-			}
-		}
-		// fmt.Println("tmp", string(tmp))
-
-		// Check if there are any remaining matching letters
-		// If there are, it's a 1, it not, it's 0
-		if cp == 0 {
-			if str.IndexByte(string(tmp), cg) >= 0 {
-				// fmt.Println("false")
-				return false
-			}
-			continue
-		}
-
-		if cp == 1 {
-			if str.IndexByte(string(tmp), cg) < 0 {
-				// fmt.Println("false")
-				return false
-			}
-			continue
+	// Determine the 2's
+	for ig, cg := range bguess {
+		p[ig] = 0 // initialize explicitly for good measure
+		if cg == bword[ig] {
+			p[ig] = 2
+			bword[ig] = '*'
 		}
 	}
-	// fmt.Println("true")
+
+	for ig, cg := range bguess {
+		for iw, cw := range bword {
+			if cg == cw && bword[ig] != '*' {
+				p[ig] = 1
+				bword[iw] = '*'
+				break
+			}
+		}
+	}
+
+	// Compare the patterns
+	for ip, cp := range pattern {
+		if p[ip] != cp {
+			return false
+		}
+	}
 	return true
 }
