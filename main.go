@@ -238,8 +238,11 @@ func PatternMatch(guess string, word string, pattern Pattern) bool {
 	}
 
 	for ig, cg := range bguess {
+		if bword[ig] == '*' {
+			continue
+		}
 		for iw, cw := range bword {
-			if cg == cw && bword[ig] != '*' {
+			if cg == cw {
 				p[ig] = 1
 				bword[iw] = '*'
 				break
