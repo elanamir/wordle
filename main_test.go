@@ -11,6 +11,8 @@ func TestPatternMatch(t *testing.T) {
 		pattern     Pattern
 		want        bool
 	}{
+		{"scare", "dress", []int{1, 0, 0, 1, 1}, true},
+		{"aarti", "aloft", []int{2, 0, 0, 1, 0}, true},
 		{"abate", "aahed", []int{2, 0, 1, 0, 0}, false},
 		{"abate", "aahed", []int{2, 0, 1, 0, 1}, true},
 		{"scare", "stake", []int{2, 0, 2, 0, 2}, true},
@@ -67,7 +69,11 @@ func TestBuildStrategy(t *testing.T) {
 	for _, tt := range tests {
 		testname := fmt.Sprintf("%+v", tt)
 		t.Run(testname, func(t *testing.T) {
-			InitStrategy(allwords)
+			root := InitStrategy(allwords)
+			maxdepth := -1
+			fmt.Println("Num Words: ", len(allwords))
+			PrintStrategy(&root, 0, nil, &maxdepth)
+			fmt.Println("Max Depth: ", maxdepth)
 		})
 	}
 }
