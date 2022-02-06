@@ -25,6 +25,7 @@ func main() {
 	nwordsPtr := flag.Int("nwords", -1, "number of words to process (all if -1)")
 	wordlenPtr := flag.Int("wordlen", 5, "Length of words in word list")
 	otypePtr := flag.String("otype", "json", "Output type [json or native]")
+	withdict := flag.Bool("withdict", false, "Include dictionaries in native output")
 
 	flag.Parse()
 
@@ -38,7 +39,7 @@ func main() {
 	case "native":
 		maxdepth := -1
 		fmt.Println("Num Words: ", len(allwords))
-		PrintStrategy(&root, 0, nil, &maxdepth)
+		PrintStrategy(&root, 0, nil, &maxdepth, *withdict)
 		fmt.Println("Max Depth: ", maxdepth)
 
 	case "json":
@@ -91,7 +92,7 @@ func InitStrategy(allwords []string) StrategyStage {
 	return root
 }
 
-func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int) {
+func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int, withdict bool) {
 	if s == nil {
 		return
 	}
@@ -114,6 +115,9 @@ func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int) 
 			fmt.Print(" Final Word: ", s.Dictionary[0])
 		} else {
 			fmt.Print(" Guess: ", s.Guess, " DictLen: ", len(s.Dictionary))
+			if (withdict) {
+				fmt.Print(" Dict: ", s.Dictionary)
+			}
 		}
 
 		fmt.Println("")
@@ -121,7 +125,7 @@ func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int) 
 		if len(s.Patterns) != 0 {
 			for _, p := range s.Patterns {
 				if p.NextStage != nil && len(p.NextStage.Dictionary) != 0 {
-					PrintStrategy(p.NextStage, depth+1, p.Pattern, maxdepth)
+					PrintStrategy(p.NextStage, depth+1, p.Pattern, maxdepth, withdict)
 				}
 			}
 		}
@@ -194,7 +198,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 					se.NextStage.Dictionary = append(se.NextStage.Dictionary, word)
 				}
 			}
-
+			// XXX try counting average remaining guesses rather than remaining words.
 			if max_pattern_len < len(se.NextStage.Dictionary) {
 				max_pattern_len = len(se.NextStage.Dictionary)
 
@@ -234,11 +238,18 @@ func PatternMatch(guess string, word string, pattern Pattern) bool {
 		if cg == bword[ig] {
 			p[ig] = 2
 			bword[ig] = '*'
+			bguess[ig] = '*'
 		}
 	}
 
 	for ig, cg := range bguess {
+		if cg == '*' {
+			continue
+		}
 		for iw, cw := range bword {
+			if cw == '*' {
+				continue
+			}
 			if cg == cw {
 				p[ig] = 1
 				bword[iw] = '*'
