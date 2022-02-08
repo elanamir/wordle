@@ -82,7 +82,7 @@ type StrategyElement struct {
 type StrategyStage struct {
 	Dictionary []string
 	Guess      string
-	Height     int
+	Score      float64
 	Patterns   []StrategyElement
 }
 
@@ -171,7 +171,6 @@ func BuildPattern(position int, pattern Pattern, wordlen int) {
 }
 
 func BuildStrategy(s *StrategyStage, allwords []string) {
-	minmax_len := 1000000.0 //XXX
 
 	// fmt.Println("Entered")
 	if len(s.Dictionary) < 2 {
@@ -181,7 +180,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 
 	// fmt.Println("strategy stage", s)
 
-	var best StrategyStage
+	best := StrategyStage{Score: InitScore()}
 
 	for _, guess := range allwords {
 		cur := StrategyStage{Guess: guess}
@@ -200,33 +199,12 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 			}
 
 			cur.Patterns = append(cur.Patterns, se) // XXX should we append if dictionary len = 0?
-
-			/* if max_pattern_len < len(se.NextStage.Dictionary) {
-				max_pattern_len = len(se.NextStage.Dictionary)
-			}
-			*/
-
 		}
 
-		// XXX This may not be  most efficient, but much easier to test alternate metrics if we do this post-facto.
+		cur.CalcScore()
 
-		n := 0
-		sum := 0
-		for _, p := range cur.Patterns {
-			l := len(p.NextStage.Dictionary)
-			if l != 0 {
-				sum += l
-				n += 1
-			}
-		}
-
-		max_pattern_len := float64(sum) / float64(n)
-
-		// If the max is less than the current min, this is the best strategy
-		if minmax_len > max_pattern_len {
-			minmax_len = max_pattern_len
+		if cur.IsBest(best) {
 			best = cur
-			// fmt.Println("best guess:", best.Guess, "minmax:", minmax_len)
 		}
 	}
 
@@ -237,6 +215,28 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 		// fmt.Println("Next Stage")
 		BuildStrategy(p.NextStage, allwords)
 	}
+}
+
+func InitScore() float64 {
+	return 100000.0 //XXX
+}
+
+func (cur StrategyStage) IsBest(best StrategyStage) bool {
+	return best.Score > cur.Score
+}
+
+func (cur *StrategyStage) CalcScore() {
+	n := 0
+	sum := 0
+	for _, p := range cur.Patterns {
+		l := len(p.NextStage.Dictionary)
+		if l != 0 {
+			sum += l
+			n += 1
+		}
+	}
+
+	cur.Score = float64(sum) / float64(n)
 }
 
 func PatternMatch(guess string, word string, pattern Pattern) bool {
