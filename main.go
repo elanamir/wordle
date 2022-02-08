@@ -171,7 +171,7 @@ func BuildPattern(position int, pattern Pattern, wordlen int) {
 }
 
 func BuildStrategy(s *StrategyStage, allwords []string) {
-	minmax_len := 1000000 //XXX
+	minmax_len := 1000000.0 //XXX
 
 	// fmt.Println("Entered")
 	if len(s.Dictionary) < 2 {
@@ -185,7 +185,6 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 
 	for _, guess := range allwords {
 		cur := StrategyStage{Guess: guess}
-		max_pattern_len := 0
 
 		// Determine how many words from the dictionary match for each pattern
 		for _, pattern := range AllPatterns {
@@ -200,13 +199,28 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 				}
 			}
 
-			cur.Patterns = append(cur.Patterns, se)
+			cur.Patterns = append(cur.Patterns, se) // XXX should we append if dictionary len = 0?
 
-			if max_pattern_len < len(se.NextStage.Dictionary) {
+			/* if max_pattern_len < len(se.NextStage.Dictionary) {
 				max_pattern_len = len(se.NextStage.Dictionary)
 			}
+			*/
 
 		}
+
+		// XXX This may not be  most efficient, but much easier to test alternate metrics if we do this post-facto.
+
+		n := 0
+		sum := 0
+		for _, p := range cur.Patterns {
+			l := len(p.NextStage.Dictionary)
+			if l != 0 {
+				sum += l
+				n += 1
+			}
+		}
+
+		max_pattern_len := float64(sum) / float64(n)
 
 		// If the max is less than the current min, this is the best strategy
 		if minmax_len > max_pattern_len {
