@@ -82,6 +82,7 @@ type StrategyElement struct {
 type StrategyStage struct {
 	Dictionary []string
 	Guess      string
+	Height     int
 	Patterns   []StrategyElement
 }
 
@@ -115,7 +116,7 @@ func PrintStrategy(s *StrategyStage, depth int, pattern Pattern, maxdepth *int, 
 			fmt.Print(" Final Word: ", s.Dictionary[0])
 		} else {
 			fmt.Print(" Guess: ", s.Guess, " DictLen: ", len(s.Dictionary))
-			if (withdict) {
+			if withdict {
 				fmt.Print(" Dict: ", s.Dictionary)
 			}
 		}
@@ -198,12 +199,13 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 					se.NextStage.Dictionary = append(se.NextStage.Dictionary, word)
 				}
 			}
-			// XXX try counting average remaining guesses rather than remaining words.
+
+			cur.Patterns = append(cur.Patterns, se)
+
 			if max_pattern_len < len(se.NextStage.Dictionary) {
 				max_pattern_len = len(se.NextStage.Dictionary)
-
 			}
-			cur.Patterns = append(cur.Patterns, se)
+
 		}
 
 		// If the max is less than the current min, this is the best strategy
