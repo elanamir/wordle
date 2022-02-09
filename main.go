@@ -198,7 +198,9 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 				}
 			}
 
-			cur.Patterns = append(cur.Patterns, se) // XXX should we append if dictionary len = 0?
+			if len(se.NextStage.Dictionary) != 0 {
+				cur.Patterns = append(cur.Patterns, se) 
+			}
 		}
 
 		cur.CalcScore()
