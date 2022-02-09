@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
-  "encoding/json"
 	"os"
 	str "strings"
 )
@@ -12,7 +12,6 @@ import (
 func LaunchTool(sfile string, wordlen int) {
 
 	cur := ReadStrategy(sfile, wordlen)
-
 
 	alltwos := make([]int, wordlen)
 	for i, _ := range alltwos {
@@ -24,10 +23,10 @@ func LaunchTool(sfile string, wordlen int) {
 	for {
 
 		fmt.Println("Guess: ", cur.Guess)
-    if len(cur.Next) == 0 {
-      fmt.Println("All done!")
-      os.Exit(0)
-    }
+		if len(cur.Next) == 0 {
+			fmt.Println("All done!")
+			os.Exit(0)
+		}
 		fmt.Print("Response: ")
 		reponseString, err := reader.ReadString('\n')
 		if err != nil {
@@ -74,12 +73,12 @@ func ReadStrategy(sfile string, wordlen int) JsonRec {
 }
 
 func EqualPattern(p1 Pattern, p2 Pattern) bool {
-  for i, p := range p1 {
-    if p != p2[i] {
-      return false
-    }
-  }
-  return true
+	for i, p := range p1 {
+		if p != p2[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func String2Pattern(s string) Pattern {

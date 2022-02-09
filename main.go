@@ -177,6 +177,31 @@ func BuildPattern(position int, pattern Pattern, wordlen int) {
 	}
 }
 
+func OneGuess(guess string, dictionary []string) StrategyStage {
+	cur := StrategyStage{Guess: guess}
+
+	// Determine how many words from the dictionary match for each pattern
+	for _, pattern := range AllPatterns {
+		se := StrategyElement{Pattern: pattern}
+		se.NextStage = &StrategyStage{}
+
+		for _, word := range dictionary {
+			if word != guess && PatternMatch(guess, word, pattern) {
+
+				// Add the word to the pattern's dictionary
+				se.NextStage.Dictionary = append(se.NextStage.Dictionary, word)
+			}
+		}
+
+		if len(se.NextStage.Dictionary) != 0 {
+			cur.Patterns = append(cur.Patterns, se)
+		}
+	}
+	cur.CalcScore()
+	
+	return cur
+}
+
 func BuildStrategy(s *StrategyStage, allwords []string) {
 
 	// fmt.Println("Entered")
@@ -190,33 +215,12 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 	best := StrategyStage{Score: InitScore()}
 
 	for _, guess := range allwords {
-		cur := StrategyStage{Guess: guess}
-
-		// Determine how many words from the dictionary match for each pattern
-		for _, pattern := range AllPatterns {
-			se := StrategyElement{Pattern: pattern}
-			se.NextStage = &StrategyStage{}
-
-			for _, word := range s.Dictionary {
-				if word != guess && PatternMatch(guess, word, pattern) {
-
-					// Add the word to the pattern's dictionary
-					se.NextStage.Dictionary = append(se.NextStage.Dictionary, word)
-				}
-			}
-
-			if len(se.NextStage.Dictionary) != 0 {
-				cur.Patterns = append(cur.Patterns, se)
-			}
-		}
-
-		cur.CalcScore()
-
+		cur := OneGuess(guess, s.Dictionary)
 		if cur.IsBest(best) {
-			best = cur
+				best = cur
 		}
 	}
-
+	
 	s.Guess = best.Guess
 	s.Patterns = best.Patterns
 
@@ -235,17 +239,17 @@ func (cur StrategyStage) IsBest(best StrategyStage) bool {
 }
 
 func (cur *StrategyStage) CalcScore() {
-	n := 0
-	sum := 0
+	var n float64 = 0
+	var sum float64 = 0
 	for _, p := range cur.Patterns {
 		l := len(p.NextStage.Dictionary)
 		if l != 0 {
-			sum += l
+			sum += float64(l)
 			n += 1
 		}
 	}
 
-	cur.Score = float64(sum) / float64(n)
+	cur.Score = sum / n
 }
 
 func PatternMatch(guess string, word string, pattern Pattern) bool {
