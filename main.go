@@ -25,9 +25,16 @@ func main() {
 	nwordsPtr := flag.Int("nwords", -1, "number of words to process (all if -1)")
 	wordlenPtr := flag.Int("wordlen", 5, "Length of words in word list")
 	otypePtr := flag.String("otype", "json", "Output type [json or native]")
-	withdict := flag.Bool("withdict", false, "Include dictionaries in native output")
+	withdictPtr := flag.Bool("withdict", false, "Include dictionaries in native output")
+	sfilePtr := flag.String("strategyfile", "s.json", "Strategy json file input")
+	cmdPtr := flag.Bool("cmdline", false, "Launch command line")
 
 	flag.Parse()
+
+	if *cmdPtr {
+		LaunchTool(*sfilePtr, *wordlenPtr)
+		os.Exit(0)
+	}
 
 	AllPatterns = make([]Pattern, 0)
 	BuildPattern(0, Pattern{}, *wordlenPtr)
@@ -39,7 +46,7 @@ func main() {
 	case "native":
 		maxdepth := -1
 		fmt.Println("Num Words: ", len(allwords))
-		PrintStrategy(&root, 0, nil, &maxdepth, *withdict)
+		PrintStrategy(&root, 0, nil, &maxdepth, *withdictPtr)
 		fmt.Println("Max Depth: ", maxdepth)
 
 	case "json":
@@ -199,7 +206,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 			}
 
 			if len(se.NextStage.Dictionary) != 0 {
-				cur.Patterns = append(cur.Patterns, se) 
+				cur.Patterns = append(cur.Patterns, se)
 			}
 		}
 
