@@ -1,3 +1,3 @@
-module github.com/elanamir/wordle
+module github.com/elanamir/wordlebot
 
 go 1.16
