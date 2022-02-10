@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"sync"
 )
@@ -178,7 +179,6 @@ func BuildPattern(position int, pattern Pattern, wordlen int) {
 	}
 }
 
-
 func BuildStrategy(s *StrategyStage, allwords []string) {
 
 	// fmt.Println("Entered")
@@ -218,7 +218,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 					cur.Patterns = append(cur.Patterns, se)
 				}
 			}
-			cur.CalcScore()
+			cur.CalcScore(len(s.Dictionary))
 
 			mtx.Lock()
 			if cur.IsBest(best) {
@@ -231,7 +231,7 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 	}
 
 	wg.Wait()
-	
+
 	s.Guess = best.Guess
 	s.Patterns = best.Patterns
 
@@ -242,13 +242,26 @@ func BuildStrategy(s *StrategyStage, allwords []string) {
 }
 
 func InitScore() float64 {
-	return 100000.0 //XXX
+	return 0
 }
 
 func (cur StrategyStage) IsBest(best StrategyStage) bool {
-	return best.Score > cur.Score
+	return best.Score < cur.Score
 }
 
+func (cur *StrategyStage) CalcScore(dlen int) {
+	var entropy float64 = 0
+	for _, p := range cur.Patterns {
+		l := len(p.NextStage.Dictionary)
+		if l != 0 {
+			pr := float64(l) / float64(dlen)
+			entropy += -pr * math.Log2(pr)
+		}
+	}
+
+	cur.Score = entropy
+}
+/**
 func (cur *StrategyStage) CalcScore() {
 	var n float64 = 0
 	var sum float64 = 0
@@ -262,6 +275,7 @@ func (cur *StrategyStage) CalcScore() {
 
 	cur.Score = sum / n
 }
+**/
 
 func PatternMatch(guess string, word string, pattern Pattern) bool {
 	// Calculate the pattern between guess and word and then compare to pattern
