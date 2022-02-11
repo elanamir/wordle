@@ -13,7 +13,7 @@ Alternatively, a JSON version of the strategy is also in the same directory, whi
 
 `% ./wordlebot -cmdline -strategyfile=strategies/CollinsStrategy.json`
 
-The bot will walk you through the guesses.  You enter the responses using the code above.  For example, `gray gray green yellow green` would be entered `002121` as a response.
+The bot will walk you through the guesses.  You enter the responses using the code above.  For example, `gray gray green yellow green` would be entered `00212` as a response.
 
 Aside from that: 
 
