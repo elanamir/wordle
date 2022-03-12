@@ -28,7 +28,7 @@ func main() {
 	wordlenPtr := flag.Int("wordlen", 5, "Length of words in word list")
 	otypePtr := flag.String("otype", "json", "Output type [json or native]")
 	withdictPtr := flag.Bool("withdict", false, "Include dictionaries in native output")
-	sfilePtr := flag.String("strategyfile", "s.json", "Strategy json file input")
+	sfilePtr := flag.String("strategyfile", "strategies/CollinsStrategy.json", "Strategy json file input")
 	cmdPtr := flag.Bool("cmdline", false, "Launch command line")
 
 	flag.Parse()
