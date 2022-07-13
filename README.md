@@ -1,4 +1,4 @@
-# WordleBot - Worlde style puzzle solver
+# WordleBot - Wordle style puzzle solver
 
 This small package provides a solver for 'wordle' style puzzles.   It takes an arbitrary list of words and provides the optimal strategy to solve them.   There are configuration options to load dictionaries with different word lengths to generate strategies, as well as way to use the strategy in an interactive bot.
 
